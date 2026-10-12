@@ -1,0 +1,26 @@
+name: Assemble and test RTC display
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  rtc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Fetch pinned MASM-compatible assembler
+        uses: actions/checkout@v7
+        with:
+          repository: Baron-von-Riedesel/JWasm
+          ref: 7f6f32e78b79565d40bcce496756aadd1ff66900
+          path: build/tools/JWasm
+      - run: make -C build/tools/JWasm -f GccUnix.mak -j2
+      - run: build/tools/JWasm/build/GccUnixR/jwasm -mz -Fobuild/clock.exe test.asm
+      - run: python -m pip install -r tests/requirements.txt
+      - run: python tests/test_clock.py
